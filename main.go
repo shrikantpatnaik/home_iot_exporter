@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
@@ -14,13 +15,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func recordMetrics() {
-	go func() {
-		for {
-			iotMetric.WithLabelValues("hello", "world").Inc()
-			time.Sleep(2 * time.Second)
-		}
-	}()
+type Metric struct {
+	Name  string  `json:"id"`
+	Type  string  `json:"type"`
+	Value float64 `json:"value"`
 }
 
 var (
@@ -40,13 +38,18 @@ func init() {
 	prometheus.MustRegister(iotMetric)
 }
 
+func metricPostHandler(w http.ResponseWriter, r *http.Request) {
+	var metric Metric
+	_ = json.NewDecoder(r.Body).Decode(&metric)
+	iotMetric.WithLabelValues(metric.Name, metric.Type).Set(metric.Value)
+	w.WriteHeader(http.StatusOK)
+}
+
 func main() {
-	var wait time.Duration
-	flag.DurationVar(&wait, "graceful-timeout", time.Second*15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
 	flag.Parse()
-	recordMetrics()
 	r := mux.NewRouter()
 	r.Handle("/metrics", promhttp.Handler()).Methods("GET")
+	r.HandleFunc("/metrics", metricPostHandler).Methods("POST")
 
 	srv := &http.Server{
 		Addr:         "0.0.0.0:8080",
@@ -72,7 +75,7 @@ func main() {
 	<-c
 
 	// Create a deadline to wait for.
-	ctx, cancel := context.WithTimeout(context.Background(), wait)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 	// Doesn't block if no connections, but will otherwise wait
 	// until the timeout deadline.
