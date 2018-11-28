@@ -7,7 +7,26 @@ I personally use it in my Home IOT network with Raspberry Pi's and Arduino's to 
 
 ## Usage
 
-Run the server with `go run main.go`
+### Start Server
+#### Local
+```bash
+go build main.go -o home_iot_exporter
+./home_iot_exporter
+
+```
+
+#### Docker
+##### Run Existing image
+```bash
+docker run -it -p 8080:8080 shrikantpatnaik/home_iot_exporter
+```
+##### Build Image
+If you want to change anything then build and run the image 
+```bash
+docker build --force-rm=true -t home_iot_exporter .
+docker run -it -p 8080 home_iot_exprter
+```
+
 
 Metrics are exposed at `http://localhost:8080/metrics`
 
