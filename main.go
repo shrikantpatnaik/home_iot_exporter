@@ -16,9 +16,13 @@ import (
 )
 
 type Metric struct {
-	Name  string  `json:"id"`
+	Name  string  `json:"name"`
 	Type  string  `json:"type"`
 	Value float64 `json:"value"`
+}
+
+type Metrics struct {
+	Metrics []Metric `json:"metrics"`
 }
 
 var (
@@ -39,9 +43,11 @@ func init() {
 }
 
 func metricPostHandler(w http.ResponseWriter, r *http.Request) {
-	var metric Metric
-	_ = json.NewDecoder(r.Body).Decode(&metric)
-	iotMetric.WithLabelValues(metric.Name, metric.Type).Set(metric.Value)
+	var metrics Metrics
+	_ = json.NewDecoder(r.Body).Decode(&metrics)
+	for _, metric := range metrics.Metrics {
+		iotMetric.WithLabelValues(metric.Name, metric.Type).Set(metric.Value)
+	}
 	w.WriteHeader(http.StatusOK)
 }
 
