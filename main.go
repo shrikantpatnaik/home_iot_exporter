@@ -27,7 +27,6 @@ type Metrics struct {
 
 var (
 	iotMetric = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Namespace: "sp_home",
 		Subsystem: "iot",
 		Name:      "metric",
 		Help:      "Metric for Home IOT Network",
